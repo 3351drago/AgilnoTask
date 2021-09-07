@@ -1,20 +1,16 @@
+var func = require("../helpers/helpers");
+
+
 const shortUrlBuffer = []; 
 
-function getRandomNumber(min, max) {
-    return Math.random() * (max - min) + min;
-}
-
-function shortenUrlName(string) {
-    string = string.split('.')[0];   //splits string to an array defined by the '.' and returns the first element
-    return '/' + string.charAt(0) + string.charAt(getRandomNumber(1, string.length / 2)) + string.charAt(getRandomNumber(string.length / 2, string.length));  //random short url 
-}
 
 exports.urlShort = function (req, res) {
     res.setHeader("Content-Type", "application/json");
 
     var postUrl = req.body.url;
     if (postUrl.startsWith("http://") || postUrl.startsWith("https://")) {
-        var short_url = shortenUrlName(postUrl);
+        var short_url = func.shortenUrlName(postUrl);   //gets short url
+        short_url = func.isShortUrlSame(short_url,shortUrlBuffer);   //ads a number if the short url is already in the array
         var urls = {
             url: postUrl,
             short_url: short_url
@@ -24,7 +20,8 @@ exports.urlShort = function (req, res) {
     }
     else {
         var expandedUrl = "http://" + postUrl;
-        var short_url = shortenUrlName(postUrl);
+        var short_url = func.shortenUrlName(postUrl);
+        short_url = func.isShortUrlSame(short_url,shortUrlBuffer);
         var urls = {
             url: expandedUrl,
             short_url: short_url
@@ -34,20 +31,25 @@ exports.urlShort = function (req, res) {
     }
 };
 
+
 exports.urlRedirect = function (req, res) {
-    var shortUrl = req.params.shorturl.replace('/','');
+    var shortUrl = req.params.shorturl;
+    var isSame = false;
+    var urlIndex = '';
 
-    shortUrlBuffer.forEach(url => {
-        if(url.short_url.replace('/','')==shortUrl){
-            console.log(url.short_url)
-            res.redirect(url.url);
+    for (let i = 0; i < shortUrlBuffer.length; i++){
+        if(shortUrlBuffer[i].short_url.replace('/','')===shortUrl){
+            isSame=true;
+            urlIndex = i;
         }
-        else
-            res.send("Url has not been shortened");
-    })
-    
-    res.send("Url has not been shortened");
+    }
+
+    if(isSame == true){
+        // res.redirect(301, shortUrlBuffer[urlIndex].url);
+        res.set('location', shortUrlBuffer[urlIndex].url);
+        res.status(301).send()
+    }
+    else{
+        res.send("Url not on short_url list");
+    }
 };
-
-
-//staviti erore i izbrisati users napraviti funkcije od svega sto se moze, ako je isti dodaj mu slovo
