@@ -5,5 +5,6 @@ var urlShortController = require('../controllers/urlShortController');
 
 
 router.post('/', urlShortController.urlShort);
+router.get('/:shorturl', urlShortController.urlRedirect);
 
 module.exports = router;
